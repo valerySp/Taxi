@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Taxi</string>
+    <string name="driverBtn">Я водитель</string>
+    <string name="customerBtn">Я клиент</string>
+    <string name="email">abc@mail.ru</string>
+    <string name="password">******</string>
+    <string name="exit">Войти</string>
+    <string name="registration">Регистрация</string>
+    <string name="driverStatus">Вход для водителя</string>
+    <string name="accCreate">Еще нет аккаунта?</string>
 </resources>
