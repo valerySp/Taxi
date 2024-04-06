@@ -8,4 +8,5 @@
     <string name="registration">Регистрация</string>
     <string name="driverStatus">Вход для водителя</string>
     <string name="accCreate">Еще нет аккаунта?</string>
+    <string name="customerStatus">Вход для клинта</string>
 </resources>
