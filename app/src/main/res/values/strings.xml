@@ -9,4 +9,6 @@
     <string name="driverStatus">Вход для водителя</string>
     <string name="accCreate">Еще нет аккаунта?</string>
     <string name="customerStatus">Вход для клинта</string>
+    <string name="title_activity_driver_maps">DriverMapsActivity</string>
+    <string name="title_activity_custmers_map">CustmersMapActivity</string>
 </resources>

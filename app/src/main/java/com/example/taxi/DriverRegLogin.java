@@ -1,15 +1,16 @@
 package com.example.taxi;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -85,6 +86,9 @@ public class DriverRegLogin extends AppCompatActivity {
                 if (task.isSuccessful()){
                     Toast.makeText(DriverRegLogin.this,"Успешный вход",Toast.LENGTH_SHORT).show();
                     loadingBar.dismiss();
+                    Intent intent=new Intent(DriverRegLogin.this,DriverMapsActivity.class);
+                    startActivity(intent);
+
                 } else {
                     Toast.makeText(DriverRegLogin.this,"Ошибка",Toast.LENGTH_SHORT).show();
                     loadingBar.dismiss();
@@ -105,6 +109,8 @@ public class DriverRegLogin extends AppCompatActivity {
                 if (task.isSuccessful()){
                     Toast.makeText(DriverRegLogin.this,"Регистрация прошла успешно",Toast.LENGTH_SHORT).show();
                     loadingBar.dismiss();
+                    Intent intent=new Intent(DriverRegLogin.this,DriverMapsActivity.class);
+                    startActivity(intent);
                 } else {
                     Toast.makeText(DriverRegLogin.this,"Ошибка",Toast.LENGTH_SHORT).show();
                     loadingBar.dismiss();
