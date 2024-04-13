@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class CustomerRegLog extends AppCompatActivity {
 
@@ -24,7 +26,10 @@ public class CustomerRegLog extends AppCompatActivity {
     EditText emailET,passwordET;
 
     FirebaseAuth mAuth;
+    DatabaseReference customerDataBaseRef;
+    String onLineCustomerID;
     ProgressDialog loadingBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,10 @@ public class CustomerRegLog extends AppCompatActivity {
 
         mAuth=FirebaseAuth.getInstance();
         loadingBar=new ProgressDialog(this);
+
+        onLineCustomerID=mAuth.getCurrentUser().getUid();
+        customerDataBaseRef= FirebaseDatabase.getInstance().getReference().child("Users").child("Customers")
+                        .child(onLineCustomerID);
 
         question.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,6 +115,11 @@ public class CustomerRegLog extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()){
+                    onLineCustomerID=mAuth.getCurrentUser().getUid();
+                    customerDataBaseRef= FirebaseDatabase.getInstance().getReference().child("Users").child("Customers")
+                            .child(onLineCustomerID);
+                    customerDataBaseRef.setValue(true);
+
                     Toast.makeText(CustomerRegLog.this,"Регистрация прошла успешно",Toast.LENGTH_SHORT).show();
                     loadingBar.dismiss();
                 } else {
