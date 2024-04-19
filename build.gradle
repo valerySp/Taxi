@@ -3,6 +3,11 @@ buildscript {
         google()  // Google's Maven repository
         mavenCentral()
         //maven { url 'https://jitpack.io' }
+        jcenter() {
+            content {
+                includeModule("com.theartofdev.edmodo", "android-image-cropper")
+            }
+        }
         // {
     }
     dependencies {

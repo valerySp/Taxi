@@ -1,15 +1,22 @@
 package com.example.taxi;
 
+import static android.Manifest.permission.CALL_PHONE;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.taxi.databinding.ActivityCustmersMapBinding;
@@ -36,9 +43,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.List;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class CustomersMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -49,13 +59,14 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
     private ActivityCustmersMapBinding binding;
 
     private int radius=1;
-    private boolean driverFound=false,requestType;
+    private boolean driverFound=false,requestType=false;
     private String driverFoundId;
 
     GoogleApiClient googleApiClient;
     Location lastLocation;
     com.google.android.gms.location.LocationRequest locationRequest;
     private Button logOutCustomerBtn,callTaxiBtn;
+    private Button settingsBtn;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
     private String customerID;
@@ -66,14 +77,16 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
     private ValueEventListener driverLocRefListener;
     Marker driverMarker, pickUPMarker;
     GeoQuery geoQuery;
+    private TextView txtName, txtPhone, txtCarName;
+    private CircleImageView driverPhoto;
+    private RelativeLayout relativeLayout;
+    private ImageView callDriver;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        binding = ActivityCustmersMapBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_custmers_map);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -82,6 +95,8 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
 
         logOutCustomerBtn=findViewById(R.id.customer_logout_btn);
         callTaxiBtn=findViewById(R.id.customer_order_btn);
+        settingsBtn=(Button)findViewById(R.id.customer_settings_btn);
+        callDriver=findViewById(R.id.call_to_driver);
 
         mAuth=FirebaseAuth.getInstance();
         currentUser=mAuth.getCurrentUser();
@@ -89,6 +104,16 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
 
         driversAvailableRef=FirebaseDatabase.getInstance().getReference().child("Driver Available");
         driverLocRef=FirebaseDatabase.getInstance().getReference().child("Driver Working");
+
+        txtName = (TextView)findViewById(R.id.driver_name);
+        txtPhone = (TextView)findViewById(R.id.driver_phone_number);
+        txtCarName = (TextView)findViewById(R.id.driver_car);
+        driverPhoto = (CircleImageView)findViewById(R.id.driver_photo);
+        relativeLayout = findViewById(R.id.rel1);
+
+        relativeLayout.setVisibility(View.INVISIBLE);
+
+
 
         logOutCustomerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,6 +123,16 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
 
                 logOutDriver();
                 disconnectDriver();
+            }
+        });
+
+        settingsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(CustomersMapActivity.this,SettingsActivity.class);
+                intent.putExtra("type","Customers");
+                startActivity(intent);
+                finish();
             }
         });
 
@@ -136,7 +171,7 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
                     geoFire.setLocation(customerID,new GeoLocation(lastLocation.getLatitude(),lastLocation.getLongitude()));
 
                     customerPosition=new LatLng(lastLocation.getLatitude(),lastLocation.getLongitude());
-                    mMap.addMarker(new MarkerOptions().position(customerPosition).title("Im here!").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+                    pickUPMarker=mMap.addMarker(new MarkerOptions().position(customerPosition).title("Im here!").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
 
                     callTaxiBtn.setText("Поиск такси...");
 
@@ -203,6 +238,8 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
                             double locLat=0;
                             double locLan=0;
                             callTaxiBtn.setText("Водитель найден.");
+                            getDriverLocation();
+                            relativeLayout.setVisibility(View.VISIBLE);
 
                             if (driverLocMap.get(0)!=null){
                                 locLat=Double.parseDouble(driverLocMap.get(0).toString());
@@ -243,6 +280,50 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
 
                     }
                 });
+    }
+
+    private void getDriverInfo(){
+        DatabaseReference reference=FirebaseDatabase.getInstance().getReference()
+                .child("Users").child("Drivers").child(driverFoundId);
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(snapshot.exists() && snapshot.getChildrenCount()>0)
+                {
+                    String name = snapshot.child("name").getValue().toString();
+                    String phone  = snapshot.child("phone").getValue().toString();
+                    String carname  = snapshot.child("carname").getValue().toString();
+
+                    txtName.setText(name);
+                    txtPhone.setText(phone);
+                    txtCarName.setText(carname);
+
+                    callDriver.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            int permissionCheck = ContextCompat.checkSelfPermission(CustomersMapActivity.this, CALL_PHONE);
+                            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(
+                                        CustomersMapActivity.this, new String[]{CALL_PHONE}, 123);
+                            } else {
+                                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel: " + phone));
+                                startActivity(intent);
+                            }
+                        }
+                    });
+
+                    if (snapshot.hasChild("image")) {
+                        String image = snapshot.child("image").getValue().toString();
+                        Picasso.get().load(image).into(driverPhoto);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void logOutDriver() {
@@ -308,7 +389,7 @@ public class CustomersMapActivity extends FragmentActivity implements OnMapReady
         lastLocation =location;
         LatLng latLng=new LatLng(location.getLatitude(),location.getLongitude());
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
     }
 
     @Override

@@ -61,8 +61,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityDriverMapsBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_driver_maps);
 
         mAuth=FirebaseAuth.getInstance();
         currentUser=mAuth.getCurrentUser();
@@ -75,6 +74,16 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        settDriverBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(DriverMapsActivity.this,SettingsActivity.class);
+                intent.putExtra("type","Drivers");
+                startActivity(intent);
+                finish();
+            }
+        });
 
         logOutDriverBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,6 +98,8 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
         getAssignedCustomerReq();
     }
+
+
 
     private void getAssignedCustomerReq() {
         assignedCustRef=FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers")
@@ -120,7 +131,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     }
 
     private void getAssignedCustomerPosition() {
-        positionCustRef=FirebaseDatabase.getInstance().getReference().child("Customer Request")
+        positionCustRef=FirebaseDatabase.getInstance().getReference().child("Customers Request")
                 .child(customerID).child("l");
 
         assignedCustomerPosListener=positionCustRef.addValueEventListener(new ValueEventListener() {
@@ -128,18 +139,13 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()){
                     List<Object> customerPositionMap=(List<Object>) snapshot.getValue();
-                    double locLat=0;
-                    double locLan=0;
-
-                    if (customerPositionMap.get(0)!=null){
-                        locLat=Double.parseDouble(customerPositionMap.get(0).toString());
-                    }
-                    if (customerPositionMap.get(1)!=null){
-                        locLan=Double.parseDouble(customerPositionMap.get(1).toString());
-                    }
+                    double locLat=Double.parseDouble(customerPositionMap.get(0).toString());;
+                    double locLan=Double.parseDouble(customerPositionMap.get(1).toString());;
 
                     LatLng driverLatLng=new LatLng(locLat,locLan);
-                    mMap.addMarker(new MarkerOptions().position(driverLatLng).title("Забрать клиента тут..").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+                    pickUPMarker=mMap.addMarker(new MarkerOptions().position(driverLatLng).title("Забрать клиента тут..").icon(BitmapDescriptorFactory.fromResource(R.drawable.user)));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(driverLatLng));
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
                 }
             }
 
@@ -173,8 +179,8 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);
-        locationRequest.setFastestInterval(1000);
+        locationRequest.setInterval(100000);
+        locationRequest.setFastestInterval(100000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -200,7 +206,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
            lastLocation =location;
            LatLng latLng=new LatLng(location.getLatitude(),location.getLongitude());
            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-           mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+           mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
 
            String userID= FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -227,7 +233,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
     protected synchronized void buildGoogleApiClient(){
         googleApiClient=new GoogleApiClient.Builder(this).addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
+                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
         googleApiClient.connect();
